@@ -1,5 +1,5 @@
 from django.contrib import admin
-from django.urls import path
+from django.urls import path, include
 from . import views
 
 urlpatterns = [
@@ -7,4 +7,6 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path("search/", views.search, name="search"),
     path("canteen/<int:id>/", views.canteen_detail, name="canteen_detail"),
+    path("register/", views.register, name="register"),
+    path('accounts/', include('django.contrib.auth.urls')),
 ]
