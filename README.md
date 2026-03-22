@@ -29,21 +29,18 @@
 1. Установитиь зависимости. (Нужен Python 3.10 и выше)
 
 ```
-bash
 pip install -r requirements.txt
 ```
 
 2.Перейдите в папку с проектом и примените миграции:
 
 ```
-bash
 cd backend
 python manage.py migrate
 ```
 
 3. Запустите локальный сервер.
 ```
-bash
 python manage.py runserver
 ```
 
