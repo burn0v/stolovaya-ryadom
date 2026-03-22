@@ -1,111 +1,39 @@
-<!DOCTYPE html>
-<html lang="ru">
-<head>
+{% extends 'base.html' %}
 
-<meta charset="UTF-8">
-<title>Поиск столовых</title>
-
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-
-<style>
-
-body{
-    background:#f5f7fa;
-}
-
-.hero{
-    padding:80px 20px;
-    text-align:center;
-}
-
-.canteen-card{
-    transition:0.2s;
-}
-
-.canteen-card:hover{
-    transform:scale(1.02);
-}
-
-</style>
-
-</head>
-
-<body>
-
-<!-- NAVBAR -->
-
-<nav class="navbar navbar-dark bg-dark">
-<div class="container">
-<a class="navbar-brand" href="#">🍽 Столовая Рядом</a>
-</div>
-</nav>
-
-
-<!-- HERO -->
-
+{% block content %}
 <div class="hero">
+    <h1 class="display-5 fw-bold">Найди столовую рядом</h1>
+    <p class="text-muted">Поиск лучших столовых рядом с тобой</p>
 
-<h1 class="display-5 fw-bold">Найди столовую рядом</h1>
-<p class="text-muted">Поиск лучших столовых рядом с тобой</p>
-
-<form method="GET" class="d-flex justify-content-center mt-4">
-
-<input 
-type="text" 
-name="q" 
-class="form-control w-25 me-2"
-placeholder="Введите город..."
-value="{{ query }}"
->
-
-<button class="btn btn-primary">
-Найти
-</button>
-
-</form>
-
+    <form action="{% url 'search' %}" method="GET" class="d-flex justify-content-center mt-4">
+        <input 
+            type="text" 
+            name="q" 
+            class="form-control w-25 me-2"
+            placeholder="Название или адрес..."
+            value="{{ query|default:'' }}"
+        >
+        <button type="submit" class="btn btn-primary">Найти</button>
+    </form>
 </div>
-
-
-<!-- RESULTS -->
 
 <div class="container">
-
-<div class="row">
-
-{% for c in canteens %}
-
-<div class="col-md-4 mb-4">
-
-<div class="card canteen-card shadow-sm">
-
-<div class="card-body">
-
-<h5 class="card-title">{{ c.name }}</h5>
-
-<p class="card-text">
-📍 {{ c.address }}
-</p>
-
-<p>
-⭐ {{ c.rating }}
-</p>
-
-<a href="/canteen/{{ c.id }}/" class="btn btn-outline-primary btn-sm">
-Подробнее
-</a>
-
+    <h3 class="mb-4">Популярные места</h3>
+    <div class="row">
+        {% for c in canteens %}
+        <div class="col-md-4 mb-4">
+            <div class="card canteen-card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">{{ c.name }}</h5>
+                    <p class="card-text text-muted">📍 {{ c.address }}</p>
+                    <p class="fw-bold text-warning">⭐ {{ c.rating }}</p>
+                    <a href="{% url 'canteen_detail' c.id %}" class="btn btn-outline-primary btn-sm w-100">Подробнее</a>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <p class="text-center">Столовых пока не добавлено.</p>
+        {% endfor %}
+    </div>
 </div>
-
-</div>
-
-</div>
-
-{% endfor %}
-
-</div>
-
-</div>
-
-</body>
-</html>
+{% endblock %}

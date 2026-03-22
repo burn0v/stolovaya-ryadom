@@ -12,5 +12,9 @@ class Canteen(models.Model):
         )
     menu = models.TextField(default="Меню пока не добавлено")
 
+    lat = models.FloatField(null=True, blank=True)
+    lng = models.FloatField(null=True, blank=True)
+
+
     def __str__(self):
         return self.name

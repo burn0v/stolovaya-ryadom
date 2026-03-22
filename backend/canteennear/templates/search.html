@@ -1,0 +1,101 @@
+{% extends 'base.html' %}
+
+{% block title %}Результаты поиска: {{ query }}{% endblock %}
+
+{% block extra_style %}
+    .main-container { display: flex; height: calc(100vh - 56px); }
+    #map { width: 60%; height: 100%; }
+    .list { width: 40%; padding: 20px; overflow-y: auto; background: white; }
+{% endblock %}
+
+{% block content %}
+<div class="main-container">
+    <div id="map"></div>
+
+    <div class="list">
+        <h4>Результаты для: {{ query|default:"Все места" }}</h4>
+        <hr>
+        {% for c in canteens %}
+        <div class="card mb-3 shadow-sm">
+            <div class="card-body">
+                <h5>{{ c.name }}</h5>
+                <p class="small mb-1">📍 {{ c.address }}</p>
+                <p class="small text-warning">⭐ {{ c.rating }}</p>
+                <a href="{% url 'canteen_detail' c.id %}" class="btn btn-sm btn-primary">Перейти</a>
+            </div>
+        </div>
+        {% empty %}
+        <p>Ничего не найдено.</p>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://api-maps.yandex.ru/2.1/?apikey=60049bd0-2ca5-40c2-9ab7-3ffbbf149171&lang=ru_RU"></script>
+
+<script>
+    ymaps.ready(init);
+
+    function init() {
+        // 1. Создаем карту
+        var map = new ymaps.Map("map", {
+            center: [55.7961, 49.1064], // Координаты Казани
+            zoom: 12,
+            controls: ['zoomControl', 'fullscreenControl'] 
+        });
+
+        // 2. Обработка поиска (геокодирование)
+        // Используем фильтр |escapejs, чтобы кавычки в названии не ломали JS
+        var userQuery = "{{ query|escapejs }}";
+        var cityPrefix = "{{ city_prefix|escapejs }}";
+
+        if (userQuery && userQuery !== "None") {
+            var fullSearchQuery = cityPrefix + ", " + userQuery;
+
+            ymaps.geocode(fullSearchQuery).then(function (res) {
+                var obj = res.geoObjects.get(0);
+                if (obj) {
+                    var coords = obj.geometry.getCoordinates();
+                    map.setCenter(coords, 15);
+
+                    var userMark = new ymaps.Placemark(coords, {
+                        balloonContent: "Вы искали: " + fullSearchQuery
+                    }, {
+                        preset: 'islands#redDotIcon'
+                    });
+                    map.geoObjects.add(userMark);
+                }
+            }).catch(function(err) {
+                console.error("Ошибка геокодирования:", err);
+            });
+        }
+
+        // 3. Добавление меток столовых на карту
+        var canteens = [
+            {% for c in canteens %}
+                {% if c.lat and c.lng %}
+                {
+                    name: "{{ c.name|escapejs }}",
+                    lat: {{ c.lat|stringformat:"f" }},
+                    lng: {{ c.lng|stringformat:"f" }},
+                    url: "{% url 'canteen_detail' c.id %}"
+                },
+                {% endif %}
+            {% endfor %}
+        ];
+
+        canteens.forEach(function(c) {
+            var placemark = new ymaps.Placemark([c.lat, c.lng], {
+                balloonContent: `
+                    <div style="color: #333;">
+                        <strong>${c.name}</strong><br>
+                        <a href="${c.url}" style="color: #0d6efd; text-decoration: none;">Подробнее</a>
+                    </div>
+                `
+            });
+            map.geoObjects.add(placemark);
+        });
+    }
+</script>
+{% endblock %}
