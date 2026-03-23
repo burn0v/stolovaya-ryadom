@@ -1,3 +1,4 @@
+from geopy.geocoders import Nominatim
 from django.db import models
 from django.contrib.auth.models import User
 from django.db.models import Avg
@@ -5,12 +6,26 @@ from django.db.models import Avg
 class Canteen(models.Model):
     name = models.CharField(max_length=200)
     address = models.CharField(max_length=300)
-    city = models.CharField(max_length=100)
     rating = models.FloatField(default=0)
     working_hours = models.CharField(max_length=200, default="Время работы не указано")
     menu = models.TextField(default="Меню пока не добавлено")
     lat = models.FloatField(null=True, blank=True)
     lng = models.FloatField(null=True, blank=True)
+
+    def save(self, *args, **kwargs):
+        full_address = f"Казань, {self.address}"
+        
+        geolocator = Nominatim(user_agent="canteennear_app")
+        try:
+            location = geolocator.geocode(full_address)
+            if location:
+                self.lat = location.latitude
+                self.lng = location.longitude
+        except Exception as e:
+            print(f"Ошибка автоматического геокодирования: {e}")
+        
+        # Вызываем стандартный метод сохранения
+        super().save(*args, **kwargs)
 
     def update_rating(self):
         # Вычисляем среднюю оценку по всем отзывам этой столовой

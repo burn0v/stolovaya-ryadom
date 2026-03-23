@@ -1,3 +1,5 @@
+from geopy.geocoders import Nominatim
+from geopy.distance import geodesic
 from django.shortcuts import render, get_object_or_404, redirect
 from .models import Canteen, Review
 from django.db.models import Q
@@ -10,19 +12,59 @@ def home(request):
 
 def search(request):
     query = request.GET.get("q", "").strip()
-    city_prefix = "Казань"
+    city_prefix = "Казань, " 
     
+    # 1. Получаем ВООБЩЕ ВСЕ заведения с координатами для карты
+    all_canteens = Canteen.objects.exclude(lat__isnull=True, lng__isnull=True)
+    
+    filtered_canteens = []
+    user_lat = None
+    user_lng = None
+    search_type = None
+
     if query:
-        canteens = Canteen.objects.filter(
+        # Пытаемся найти по названию
+        by_name = Canteen.objects.filter(
             Q(name__icontains=query) | Q(address__icontains=query)
         )
-    else:
-        canteens = Canteen.objects.all()
         
+        if by_name.exists():
+            filtered_canteens = by_name.order_by('-rating')[:5]
+        else:
+            # Геокодируем адрес пользователя
+            geolocator = Nominatim(user_agent="canteennear_app")
+            try:
+                location = geolocator.geocode(city_prefix + query)
+                if location:
+                    user_lat = location.latitude
+                    user_lng = location.longitude
+                    search_type = "radius"
+                    user_coords = (user_lat, user_lng)
+                    
+                    # Ищем заведения в радиусе 800м для СПИСКА
+                    temp_list = []
+                    for c in all_canteens:
+                        dist = geodesic(user_coords, (c.lat, c.lng)).meters
+                        if dist <= 800:
+                            c.distance = int(dist)
+                            temp_list.append(c)
+                    
+                    # Сортируем по рейтингу и берем топ-5 для карточек
+                    temp_list.sort(key=lambda x: x.rating, reverse=True)
+                    filtered_canteens = temp_list[:5]
+            except Exception as e:
+                print(f"Geocode error: {e}")
+    else:
+        # Если поиска нет, в списке просто топ-5 по рейтингу
+        filtered_canteens = all_canteens.order_by('-rating')[:5]
+
     return render(request, "search.html", {
-        "canteens": canteens, 
+        "all_canteens": all_canteens,         # Все точки для карты
+        "filtered_canteens": filtered_canteens, # 5 карточек для списка
         "query": query, 
-        "city_prefix": city_prefix
+        "user_lat": user_lat,
+        "user_lng": user_lng,
+        "search_type": search_type
     })
 
 def canteen_detail(request, id):
