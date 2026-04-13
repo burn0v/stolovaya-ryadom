@@ -10,7 +10,15 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
+import os
 from pathlib import Path
+
+try:
+    from dotenv import load_dotenv
+except ImportError:
+    pass
+else:
+    load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -73,12 +81,33 @@ WSGI_APPLICATION = 'canteennear.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+# По умолчанию — PostgreSQL (см. docker-compose.yml и .env.example).
+# Для быстрого запуска без Postgres: USE_SQLITE=1 python manage.py migrate
+USE_SQLITE = os.environ.get("USE_SQLITE", "").strip() in ("1", "true", "yes")
+
+if USE_SQLITE:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "db.sqlite3",
+        }
     }
-}
+else:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": os.environ.get("POSTGRES_DB", "canteennear"),
+            "USER": os.environ.get("POSTGRES_USER", "canteennear"),
+            "PASSWORD": os.environ.get("POSTGRES_PASSWORD", "canteennear"),
+            "HOST": os.environ.get("POSTGRES_HOST", "localhost"),
+            "PORT": os.environ.get("POSTGRES_PORT", "5432"),
+        }
+    }
+
+# Ключ 2GIS для карт в шаблонах. Пустая строка в .env не должна «обнулять» ключ —
+# os.environ.get("X", default) при X="" всё равно возвращает "".
+_TWO_GIS_ENV = os.environ.get("TWO_GIS_MAP_KEY", "").strip()
+TWO_GIS_MAP_KEY = _TWO_GIS_ENV or "7316ab33-4682-4f63-b6f7-ba8fa4ae796e"
 
 
 # Password validation

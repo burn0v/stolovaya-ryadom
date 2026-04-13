@@ -1,4 +1,5 @@
-from geopy.geocoders import Nominatim
+import requests
+from django.conf import settings
 from django.db import models
 from django.contrib.auth.models import User
 from django.db.models import Avg
@@ -13,18 +14,18 @@ class Canteen(models.Model):
     lng = models.FloatField(null=True, blank=True)
 
     def save(self, *args, **kwargs):
-        full_address = f"Казань, {self.address}"
-        
-        geolocator = Nominatim(user_agent="canteennear_app")
-        try:
-            location = geolocator.geocode(full_address)
-            if location:
-                self.lat = location.latitude
-                self.lng = location.longitude
-        except Exception as e:
-            print(f"Ошибка автоматического геокодирования: {e}")
-        
-        # Вызываем стандартный метод сохранения
+        # Авто-поиск координат через 2GIS Geocoding
+        if not self.lat or not self.lng:
+            api_key = getattr(settings, "TWO_GIS_MAP_KEY", "")
+            # Ищем координаты по адресу в Казани
+            url = f"https://catalog.api.2gis.com/3.0/items/geocode?q=Казань, {self.address}&fields=items.point&key={api_key}"
+            try:
+                res = requests.get(url).json()
+                point = res['result']['items'][0]['point']
+                self.lat = point['lat']
+                self.lng = point['lon']
+            except:
+                pass 
         super().save(*args, **kwargs)
 
     def update_rating(self):

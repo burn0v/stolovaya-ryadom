@@ -54,8 +54,28 @@
                 <p>{{ canteen.working_hours }}</p>
                 <h3>🍽 Меню:</h3>
                 <p>{{ canteen.menu }}</p>
+                {% if show_detail_map %}
+                <hr>
+                <h3 class="h5">🗺 На карте</h3>
+                <div id="canteen-detail-map" class="rounded" style="width: 100%; height: 280px;"></div>
+                {% endif %}
             </div>
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+{% if show_detail_map %}
+<script src="https://maps.api.2gis.ru/2.0/loader.js?pkg=full&key={{ gis_map_key }}"></script>
+<script>
+    DG.then(function () {
+        var map = DG.map('canteen-detail-map', {
+            center: [{{ canteen.lat }}, {{ canteen.lng }}],
+            zoom: 16
+        });
+        DG.marker([{{ canteen.lat }}, {{ canteen.lng }}]).addTo(map).bindPopup('{{ canteen.name|escapejs }}');
+    });
+</script>
+{% endif %}
 {% endblock %}

@@ -1,0 +1,19 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: canteennear
+      POSTGRES_USER: canteennear
+      POSTGRES_PASSWORD: canteennear
+    ports:
+      - "5432:5432"
+    volumes:
+      - canteennear_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U canteennear -d canteennear"]
+      interval: 3s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  canteennear_pgdata:
