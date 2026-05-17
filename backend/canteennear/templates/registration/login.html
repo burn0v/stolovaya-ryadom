@@ -1,15 +1,31 @@
-{% extends 'base.html' %}
-{% block content %}
-<div class="container mt-5">
-    <div class="row justify-content-center">
-        <div class="col-md-4 card p-4 shadow">
-            <h2 class="mb-4">Вход</h2>
-            <form method="post">
-                {% csrf_token %}
-                {{ form.as_p }}
-                <button type="submit" class="btn btn-success w-100">Войти</button>
-            </form>
-        </div>
-    </div>
-</div>
+{% extends 'registration/auth_layout.html' %}
+
+{% block title %}Вход — {{ block.super }}{% endblock %}
+
+{% block auth_heading %}Вход{% endblock %}
+
+{% block auth_subtitle %}
+<p class="mt-2 text-sm text-slate-400">Войдите, чтобы оставлять отзывы</p>
+{% endblock %}
+
+{% block auth_body %}
+<form method="post" class="space-y-5 [&_p]:m-0 [&_p]:space-y-1.5 [&_label]:block [&_label]:text-sm [&_label]:font-medium [&_label]:text-slate-700 [&_input]:mt-1 [&_input]:block [&_input]:w-full [&_input]:rounded-lg [&_input]:border [&_input]:border-slate-300 [&_input]:bg-white [&_input]:px-3.5 [&_input]:py-2.5 [&_input]:text-slate-900 [&_input]:shadow-sm [&_input]:transition [&_input]:placeholder:text-slate-400 [&_input]:focus:border-brand [&_input]:focus:outline-none [&_input]:focus:ring-2 [&_input]:focus:ring-brand/20 [&_ul]:mt-1 [&_ul]:list-none [&_ul]:p-0 [&_li]:text-sm [&_li]:text-red-600">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button
+        type="submit"
+        class="w-full rounded-lg bg-brand px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-brand/25 transition hover:bg-brand-dark focus:outline-none focus:ring-2 focus:ring-brand/40 focus:ring-offset-2"
+    >
+        Войти
+    </button>
+</form>
+<p class="mt-4 text-center text-sm">
+    <a href="{% url 'password_reset' %}" class="font-medium text-slate-600 hover:text-brand">
+        Забыли пароль?
+    </a>
+</p>
+<p class="mt-4 text-center text-sm text-slate-500">
+    Нет аккаунта?
+    <a href="{% url 'register' %}" class="font-medium text-brand hover:text-brand-dark">Зарегистрироваться</a>
+</p>
 {% endblock %}

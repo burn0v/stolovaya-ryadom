@@ -33,7 +33,13 @@ SECRET_KEY = 'django-insecure-^@r@^jts4n%rdb8()xpsjw#x+$)w@ow@6($!_oz5#sf2i1bkbi
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+_hosts = os.environ.get("ALLOWED_HOSTS", "").strip()
+if _hosts:
+    ALLOWED_HOSTS = [h.strip() for h in _hosts.split(",") if h.strip()]
+elif DEBUG:
+    ALLOWED_HOSTS = ["localhost", "127.0.0.1", "[::1]"]
+else:
+    ALLOWED_HOSTS = []
 
 
 # Application definition
@@ -63,7 +69,8 @@ ROOT_URLCONF = 'canteennear.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        # Раньше DIRS был пустым — Django брал registration/* из django.contrib.admin
+        'DIRS': [BASE_DIR / 'canteennear' / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -144,7 +151,35 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = "static/"
+STATICFILES_DIRS = [BASE_DIR / "canteennear" / "static"]
 
-LOGIN_REDIRECT_URL = 'home'
-LOGOUT_REDIRECT_URL = 'home'
+LOGIN_REDIRECT_URL = "home"
+LOGOUT_REDIRECT_URL = "home"
+LOGIN_URL = "login"
+
+# Восстановление пароля: в dev — читаемый вывод в консоль runserver; в prod — SMTP через .env
+EMAIL_BACKEND = os.environ.get(
+    "EMAIL_BACKEND",
+    "canteennear.email.ReadableConsoleEmailBackend",
+)
+DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", "noreply@canteennear.local")
+SERVER_EMAIL = DEFAULT_FROM_EMAIL
+
+EMAIL_HOST = os.environ.get("EMAIL_HOST", "")
+EMAIL_PORT = int(os.environ.get("EMAIL_PORT", "587"))
+EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", "")
+EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "")
+EMAIL_USE_TLS = os.environ.get("EMAIL_USE_TLS", "true").strip().lower() in (
+    "1",
+    "true",
+    "yes",
+)
+EMAIL_USE_SSL = os.environ.get("EMAIL_USE_SSL", "").strip().lower() in (
+    "1",
+    "true",
+    "yes",
+)
+
+# Срок действия ссылки сброса пароля (секунды), по умолчанию 24 часа
+PASSWORD_RESET_TIMEOUT = int(os.environ.get("PASSWORD_RESET_TIMEOUT", str(60 * 60 * 24)))
